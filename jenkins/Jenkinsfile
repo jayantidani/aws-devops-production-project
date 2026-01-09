@@ -2,60 +2,42 @@ pipeline {
     agent any
     
     options {
-        skipDefaultCheckout(true)  // Skip auto-checkout to control it manually
+        skipDefaultCheckout(true)
     }
     
     stages {
         stage('Clean Workspace') {
             steps {
-                script {
-                    cleanWs()  // Wipe everything fresh
-                    echo 'Workspace cleaned successfully'
-                }
+                deleteDir()  // Native Jenkins step - wipes entire workspace
+                echo 'Workspace cleaned'
             }
         }
         
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    extensions: [
-                        [$class: 'WipeWorkspace'],
-                        [$class: 'CloneOption', depth: 1, shallow: true]  // Fast shallow clone
-                    ],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/jayantidani/aws-devops-production-project.git',
-                        credentialsId: 'github-creds'
-                    ]]
-                ])
-                echo 'Git checkout completed'
+                git branch: 'main',
+                    credentialsId: 'github-creds',
+                    url: 'https://github.com/jayantidani/aws-devops-production-project.git'
+                echo 'Git checkout successful'
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Build Docker') {
             steps {
-                script {
-                    sh 'docker build -t app .'
-                }
+                sh 'docker build -t aws-devops-app .'
             }
         }
         
         stage('Run Container') {
             steps {
-                script {
-                    sh 'docker run -d -p 8080:80 --name app app'
-                }
+                sh 'docker run -d -p 8080:80 --name aws-devops-app aws-devops-app'
             }
         }
     }
     
     post {
         always {
-            echo 'Pipeline completed'
-        }
-        failure {
-            echo 'Pipeline failed'
+            echo 'Pipeline finished'
         }
     }
 }
