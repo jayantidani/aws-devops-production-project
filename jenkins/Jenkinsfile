@@ -3,25 +3,28 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t devops-app ./docker'
             }
         }
 
-        stage('Run the Container') {
+        stage('Run Container') {
             steps {
                 sh '''
-                docker rm -f devops-app || true
-                docker run -d -p 5000:5000 --name devops-app devops-app
+                  docker rm -f devops-app || true
+                  docker run -d -p 5000:5000 --name devops-app devops-app
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline succeeded"
+        }
+        failure {
+            echo "❌ Pipeline failed"
         }
     }
 }
